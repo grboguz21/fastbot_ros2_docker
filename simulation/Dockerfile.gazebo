@@ -26,9 +26,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN source /opt/ros/humble/setup.bash \
  && mkdir -p /ros2_ws/src \
- && cd /ros2_ws/src \
- && git clone https://bitbucket.org/theconstructcore/rb1_docker_sim.git
-
+ && cd /ros2_ws/src 
 
 # COPY HERE
 

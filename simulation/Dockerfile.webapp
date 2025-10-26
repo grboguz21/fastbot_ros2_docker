@@ -1,5 +1,3 @@
-# How to create the docker image: docker build -t my_nginx:v0 .
-
 # Let's use "ubuntu:20.04" as the base of our image
 FROM osrf/ros:humble-desktop
 
