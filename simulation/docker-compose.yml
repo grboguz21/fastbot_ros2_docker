@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  fastbot-sim:
+    image: fastbot_sim
+    build:
+      context: .
+      dockerfile: Dockerfile.gazebo
+    container_name: fastbot-sim
+    # network_mode: host
+    # privileged: true
+    environment:
+      - DISPLAY=${DISPLAY}
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_DOMAIN_ID=1
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    command: bash -c "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash"
+
+
+  fastbot-slam:
+    image: fastbot_slam
+    build:
+      context: .
+      dockerfile: Dockerfile.slam
+    container_name: fastbot_slam
+    # network_mode: host
+    # privileged: true
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_DOMAIN_ID=1
+    command: bash -c "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash"
+
+
