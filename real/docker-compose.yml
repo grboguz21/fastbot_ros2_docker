@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+  fastbot-ros2-real:
+    image: fastbot-ros2-real
+    build:
+      context: .
+      dockerfile: Dockerfile.real
+    container_name: fastbot-ros2-real
+    network_mode: host
+    privileged: true
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_DOMAIN_ID=1
+
+    devices:
+          - /dev/arduino_nano:/dev/arduino_nano 
+          - /dev/lslidar:/dev/lslidar 
+          - /dev/video0:/dev/video0  
+          - /dev/vchiq:/dev/vchiq    
+
+    command: bash -c "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash"
+
+
+  fastbot-ros2-real-slam:
+    image: fastbot-ros2-real-slam
+    build:
+      context: .
+      dockerfile: Dockerfile.realslam
+    container_name: fastbot-ros2-real-slam
+    network_mode: host
+    privileged: true
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_DOMAIN_ID=1
+
+    devices:
+          - /dev/arduino_nano:/dev/arduino_nano 
+          - /dev/lslidar:/dev/lslidar 
+          - /dev/video0:/dev/video0  
+          - /dev/vchiq:/dev/vchiq    
+    command: bash -c "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash"
+
