@@ -1,18 +1,26 @@
 # Base image
-FROM osrf/ros:humble-desktop
-
+FROM ros:humble-ros-core AS build_stage
 # Change the default shell to Bash
 SHELL [ "/bin/bash" , "-c" ]
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-  ros-humble-gazebo-ros-pkgs \
-  ros-humble-gazebo-ros2-control \
+  build-essential \
+  cmake \
+  git \
+  python3-rosdep \ 
   ros-humble-ros2-control \
   ros-humble-ros2-controllers \
   ros-humble-joint-state-publisher \
   ros-humble-robot-state-publisher \
   ros-humble-robot-localization \
+  ros-humble-control-msgs \
+  ros-humble-teleop-twist-keyboard \
+  python3-pip \
+  i2c-tools \
+  libgpiod2 \
+  libpcap0.8 \
+  libboost-thread1.74.0 \
   ros-humble-xacro \
   ros-humble-tf2-ros \
   ros-humble-tf2-tools \
@@ -25,21 +33,28 @@ RUN apt-get update && apt-get install -y \
   ros-humble-diagnostic-updater \
   libpcap-dev \
   ros-humble-pcl-conversions \
-  ros-humble-v4l2-camera 
-  ros-humble-image-transport-plugins 
-  v4l-utils
-  && rm -rf /var/lib/apt/lists/*
+  ros-humble-v4l2-camera  \
+  ros-humble-image-transport-plugins  \
+  v4l-utils \
+  && rm -rf /var/lib/apt/lists/*  && pip install RPi.GPIO pyserial adafruit-circuitpython-ina219 smbus2   
 
-# Create workspace and download simulation repository
+  # Create workspace and download simulation repository
 RUN source /opt/ros/humble/setup.bash \
  && mkdir -p /ros2_ws/src \
  && cd /ros2_ws/src 
 
+WORKDIR /ros2_ws/src
+
 # COPY HERE
-RUN git clone https://github.com/grboguz21/fastbot_docker.git . \
- && cd /ros2_ws \
+RUN git clone https://github.com/grboguz21/fastbot_docker.git . 
+
+# ROSDEP VE DERLEME ADIMI
+RUN cd /ros2_ws \
+ && rosdep init || true \
+ && rosdep update \
+ && rosdep install --from-paths src --ignore-src -r -y \
+ && source /opt/ros/humble/setup.bash \
  && colcon build
-RUN echo "source /ros2_ws/install/setup.bash" >> ~/.bashrc
 
 
 # Build the Colcon workspace and ensure it's sourced
@@ -56,4 +71,8 @@ ENV ROS_DOMAIN_ID=1
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
 # Source the built workspace and set the entrypoint to run the package
-ENTRYPOINT ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash"]
+# ENTRYPOINT ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash"]
+
+# Step 14: CMD'yi varsayılan komut (kalıcı bir kabuk) olarak ayarla.
+# CMD ["/bin/bash"]
+ENTRYPOINT ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 launch fastbot_bringup bringup.launch.xml"]
