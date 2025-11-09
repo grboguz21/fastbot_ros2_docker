@@ -1,22 +1,22 @@
-# Let's use "ubuntu:20.04" as the base of our image
+# Base image
 FROM osrf/ros:humble-desktop
 
-# Exporting a variable to install pkgs without any interactive questions
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Installing nginx
-RUN apt-get update \
-    && apt-get install -y nginx  \
-    && rm -rf /var/lib/apt/lists/*
+# Install nginx and rosbridge_server
+RUN apt-get update && apt-get install -y \
+    nginx \
+    ros-humble-rosbridge-server \
+    ros-humble-tf2-web-republisher \
+    ros-humble-rmw-cyclonedds-cpp \
+ && rm -rf /var/lib/apt/lists/*
 
-# # Copying the local entrypoint.sh file to /entrypoint.sh in the docker image
+# Copy webpage and entrypoint
 COPY ./entrypoint.sh /entrypoint.sh
-
-# # Copying the local my_webpage to /var/www/html in the docker image
 COPY ./my_webpage /var/www/html
 
-# /bin/bash is the command we want to execute when running a docker container
-ENTRYPOINT ["/bin/bash"]
+# Make sure entrypoint.sh is executable
+RUN chmod +x /entrypoint.sh
 
-# We want /bin/bash to execute our /entrypoint.sh when container starts
+# Default command to run when container starts
 CMD ["/entrypoint.sh"]

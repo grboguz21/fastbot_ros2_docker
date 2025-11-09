@@ -23,27 +23,20 @@ RUN apt-get update && apt-get install -y \
     ros-humble-nav2-lifecycle-manager \
  && rm -rf /var/lib/apt/lists/*
 
-# Create workspace and download simulation repository
+# Create workspace
+WORKDIR /ros2_ws/src
 
-RUN source /opt/ros/humble/setup.bash \
- && mkdir -p /ros2_ws/src \
- && cd /ros2_ws/src 
+# Copy ROS2 package (fastbot workspace)
+COPY fastbot/ /ros2_ws/src/
 
-# COPY HERE
-
-
-# Build the Colcon workspace and ensure it's sourced
-RUN source /opt/ros/humble/setup.bash \
- && cd /ros2_ws \
- && colcon build
+# Build the workspace
+WORKDIR /ros2_ws
+RUN source /opt/ros/humble/setup.bash && colcon build --symlink-install
 RUN echo "source /ros2_ws/install/setup.bash" >> ~/.bashrc
 
-# Set up a workspace directory
-WORKDIR /ros2_ws/
-
-# Set environment variables
+# Environment variables
 ENV ROS_DOMAIN_ID=1
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
-# Source the built workspace and set the entrypoint to run the package
-ENTRYPOINT ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash"]
+# # Launch the simulation
+# ENTRYPOINT ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash"]

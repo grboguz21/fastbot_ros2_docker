@@ -25,9 +25,9 @@ RUN apt-get update && apt-get install -y \
   ros-humble-diagnostic-updater \
   libpcap-dev \
   ros-humble-pcl-conversions \
-  ros-humble-v4l2-camera 
-  ros-humble-image-transport-plugins 
-  v4l-utils
+  ros-humble-v4l2-camera  \
+  ros-humble-image-transport-plugins  \
+  v4l-utils \
   && rm -rf /var/lib/apt/lists/*
 
 # Create workspace and download simulation repository
