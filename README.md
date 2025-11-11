@@ -72,15 +72,13 @@ rosbridge_address
 > This section will include deployment instructions for the real robot setup.
 
 
+## 🧩 Installation Steps
 
-
+```bash
 git clone https://github.com/grboguz21/fastbot_ros2_docker.git
-
-
-
-
-
-
+cd fastbot_ros2_docker/real
+docker-compose pull
+docker-compose up -d
 
 ---
 
