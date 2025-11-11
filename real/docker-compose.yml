@@ -42,7 +42,6 @@ services:
       - "44"  # video
     volumes:
       - /dev/arduino_nano:/dev/arduino_nano
-      - /dev/lslidar:/dev/lslidar
       - /dev/video0:/dev/video0
       - /dev/vchiq:/dev/vchiq
       - ./volumes/raspicam_camera_info.yaml:/root/.ros/camera_info/mmal_service_16.1.yaml
