@@ -39,10 +39,7 @@ services:
       - ROS_DOMAIN_ID=1
     group_add:
       - "20"  # dialout (serial)
-      - "44"  # video #..
+      - "44"  # video
     tty: true
     stdin_open: true
-    command: >
-      bash -c "source /opt/ros/humble/setup.bash &&
-               source /ros2_ws/install/setup.bash &&
-               ros2 launch fastbot_slam cartographer.launch.py"
+    command: bash -c "sleep 5 && source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 launch fastbot_slam cartographer.launch.py"
