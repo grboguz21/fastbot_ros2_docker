@@ -24,7 +24,11 @@ let vueApp = new Vue({
         },
 
         // ROS topic
-        cmdVelTopic: null
+        cmdVelTopic: null,
+
+        // 🗺️ Map görüntüleme
+        mapViewer: null,
+        mapGridClient: null,
     },
 
     methods: {
@@ -36,10 +40,38 @@ let vueApp = new Vue({
             this.ros.on('connection', () => {
                 this.connected = true;
                 console.log("✅ Connected to ROSBridge!");
+
+                // cmd_vel topic
                 this.cmdVelTopic = new ROSLIB.Topic({
                     ros: this.ros,
                     name: '/fastbot/cmd_vel',
                     messageType: 'geometry_msgs/Twist'
+                });
+
+                // 🗺️ ROS2D Map Viewer
+                this.mapViewer = new ROS2D.Viewer({
+                    divID: 'map',
+                    width: 800,
+                    height: 400,
+                    background: '#111111'
+                });
+
+                this.mapGridClient = new ROS2D.OccupancyGridClient({
+                    ros: this.ros,
+                    rootObject: this.mapViewer.scene,
+                    continuous: true,
+                });
+
+                // Ölçekleme ve hizalama
+                this.mapGridClient.on('change', () => {
+                    this.mapViewer.scaleToDimensions(
+                        this.mapGridClient.currentGrid.width,
+                        this.mapGridClient.currentGrid.height
+                    );
+                    this.mapViewer.shift(
+                        this.mapGridClient.currentGrid.pose.position.x,
+                        this.mapGridClient.currentGrid.pose.position.y
+                    );
                 });
             });
 
@@ -51,6 +83,7 @@ let vueApp = new Vue({
             this.ros.on('close', () => {
                 console.warn("⚠️ Connection closed");
                 this.connected = false;
+                document.getElementById('map').innerHTML = '';
             });
         },
 
