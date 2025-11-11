@@ -1,4 +1,4 @@
-version: '3'
+version: "3.8"
 
 services:
   fastbot-ros2-real:
@@ -7,20 +7,24 @@ services:
       context: .
       dockerfile: Dockerfile.real
     container_name: fastbot-ros2-real
+    restart: unless-stopped
     network_mode: host
     privileged: true
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - ROS_DOMAIN_ID=1
-
-    devices:
-          - /dev/arduino_nano:/dev/arduino_nano 
-          - /dev/lslidar:/dev/lslidar 
-          - /dev/video0:/dev/video0  
-          - /dev/vchiq:/dev/vchiq    
-
-    command: bash -c "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash"
-
+    group_add:
+      - "20"  # dialout (seri)
+      - "44"  # video
+    volumes:
+      - /dev/arduino_nano:/dev/arduino_nano
+      - /dev/lslidar:/dev/lslidar
+      - /dev/video0:/dev/video0
+      - /dev/vchiq:/dev/vchiq
+      - ./volumes/raspicam_camera_info.yaml:/root/.ros/camera_info/mmal_service_16.1.yaml
+    tty: true
+    stdin_open: true
+    command: bash -c "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 launch fastbot_bringup bringup.launch.xml"
 
   fastbot-ros2-real-slam:
     image: fastbot-ros2-real-slam
@@ -28,16 +32,23 @@ services:
       context: .
       dockerfile: Dockerfile.realslam
     container_name: fastbot-ros2-real-slam
+    restart: unless-stopped
     network_mode: host
     privileged: true
+    depends_on:
+      - fastbot-ros2-real   
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - ROS_DOMAIN_ID=1
-
-    devices:
-          - /dev/arduino_nano:/dev/arduino_nano 
-          - /dev/lslidar:/dev/lslidar 
-          - /dev/video0:/dev/video0  
-          - /dev/vchiq:/dev/vchiq    
-    command: bash -c "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash"
-
+    group_add:
+      - "20"  # dialout (seri)
+      - "44"  # video
+    volumes:
+      - /dev/arduino_nano:/dev/arduino_nano
+      - /dev/lslidar:/dev/lslidar
+      - /dev/video0:/dev/video0
+      - /dev/vchiq:/dev/vchiq
+      - ./volumes/raspicam_camera_info.yaml:/root/.ros/camera_info/mmal_service_16.1.yaml
+    tty: true
+    stdin_open: true
+    command: bash -c "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 launch fastbot_slam cartographer.launch.py"
