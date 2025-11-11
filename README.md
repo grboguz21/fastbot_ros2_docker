@@ -53,6 +53,7 @@ docker rmi -f $(docker images -aq)
 ### 5️⃣ Pull the Latest Images
 
 ```bash
+cd /home/user/ros2_ws/src/fastbot_ros2_docker/simulation
 docker-compose pull
 ```
 
@@ -69,10 +70,11 @@ rosbridge_address
 ## 🤖 Real Robot (Physical Robot)
 
 > This section will include deployment instructions for the real robot setup.
-> Coming soon in future versions.
 
 
 
+
+git clone https://github.com/grboguz21/fastbot_ros2_docker.git
 
 
 

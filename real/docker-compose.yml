@@ -2,10 +2,7 @@ version: "3.8"
 
 services:
   fastbot-ros2-real:
-    image: fastbot-ros2-real
-    build:
-      context: .
-      dockerfile: Dockerfile.real
+    image: grboguz/oguzhangurbuz-cp22:fastbot-ros2-real
     container_name: fastbot-ros2-real
     restart: unless-stopped
     network_mode: host
@@ -14,8 +11,8 @@ services:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - ROS_DOMAIN_ID=1
     group_add:
-      - "20"  # dialout (seri)
-      - "44"  # video
+      - "20"  # dialout (serial devices)
+      - "44"  # video devices
     volumes:
       - /dev/arduino_nano:/dev/arduino_nano
       - /dev/lslidar:/dev/lslidar
@@ -24,24 +21,24 @@ services:
       - ./volumes/raspicam_camera_info.yaml:/root/.ros/camera_info/mmal_service_16.1.yaml
     tty: true
     stdin_open: true
-    command: bash -c "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 launch fastbot_bringup bringup.launch.xml"
+    command: >
+      bash -c "source /opt/ros/humble/setup.bash &&
+               source /ros2_ws/install/setup.bash &&
+               ros2 launch fastbot_bringup bringup.launch.xml"
 
   fastbot-ros2-real-slam:
-    image: fastbot-ros2-real-slam
-    build:
-      context: .
-      dockerfile: Dockerfile.realslam
+    image: grboguz/oguzhangurbuz-cp22:fastbot-ros2-slam-real
     container_name: fastbot-ros2-real-slam
     restart: unless-stopped
     network_mode: host
     privileged: true
     depends_on:
-      - fastbot-ros2-real   
+      - fastbot-ros2-real
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - ROS_DOMAIN_ID=1
     group_add:
-      - "20"  # dialout (seri)
+      - "20"  # dialout (serial)
       - "44"  # video
     volumes:
       - /dev/arduino_nano:/dev/arduino_nano
@@ -51,4 +48,7 @@ services:
       - ./volumes/raspicam_camera_info.yaml:/root/.ros/camera_info/mmal_service_16.1.yaml
     tty: true
     stdin_open: true
-    command: bash -c "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 launch fastbot_slam cartographer.launch.py"
+    command: >
+      bash -c "source /opt/ros/humble/setup.bash &&
+               source /ros2_ws/install/setup.bash &&
+               ros2 launch fastbot_slam cartographer.launch.py"
