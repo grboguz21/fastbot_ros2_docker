@@ -1,151 +1,109 @@
-<!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
-    <meta charset="UTF-8">
-    <title>FastBot WebApp - ROS cmd_vel Test</title>
-    <script src="roslib.js"></script>
+    <title>FastBot WebApp - ROS Joystick</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/roslib@1.3.0/build/roslib.min.js"></script>
+
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-            padding: 30px;
+        #dragstartzone {
+            position: relative;
+            display: inline-block;
+            width: 200px;
+            height: 200px;
+            border: 1px solid #333;
+            border-radius: 50%;
+            z-index: 10;
+            user-select: none;
         }
 
-        h1 {
-            color: #0a66c2;
+        #dragCircle {
+            position: absolute;
+            z-index: 9;
+            border: 1px solid transparent;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.3);
+            display: none;
+            width: 75px;
+            height: 75px;
         }
 
-        .status {
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-weight: bold;
-            width: fit-content;
-            transition: 0.3s ease;
-        }
-
-        .connected {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .closed {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-
-        button {
-            padding: 10px 15px;
-            margin: 5px;
-            border: none;
-            border-radius: 6px;
-            background-color: #0a66c2;
-            color: white;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        button:hover {
-            background-color: #084b8a;
-        }
-
-        .log {
-            margin-top: 20px;
-            background-color: #eee;
-            padding: 10px;
-            border-radius: 8px;
-            font-family: monospace;
-            white-space: pre-wrap;
-            max-height: 200px;
-            overflow-y: auto;
+        #dragCircle:hover {
+            background-color: lightcoral;
         }
     </style>
 </head>
 
-<body>
-    <h1>FastBot WebApp 🚀</h1>
-    <p>This page sends velocity commands to your robot using <b>/fastbot/cmd_vel</b>.</p>
+<body class="d-flex flex-column h-100">
+    <header class="header">
+        <div class="container">
+            <div class="jumbotron text-center">
+                <h1>FastBot ROS Joystick</h1>
+                <p>Control your robot with ROSBridge!</p>
+            </div>
+        </div>
+    </header>
 
-    <div id="status" class="status closed">Connecting to ROS...</div>
+    <main id="vueApp">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3>{{ menu_title }}</h3>
+                            <hr>
+                            <label>ROSBridge address</label>
+                            <br>
+                            <input type="text" v-model="rosbridge_address" class="form-control" />
+                            <br>
+                            <button class="btn btn-success" v-if="connected" @click="disconnect">Connected!</button>
+                            <button class="btn btn-primary" v-else @click="connect">Connect!</button>
+                        </div>
+                    </div>
+                </div>
 
-    <div style="margin-top: 20px;">
-        <button id="forward">⬆️ Forward</button>
-        <button id="stop">⏹️ Stop</button>
-        <button id="turnLeft">↩️ Turn Left</button>
-        <button id="turnRight">↪️ Turn Right</button>
-    </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h2>Joystick</h2>
+                            <hr>
+                            <p>Move to control robot</p>
+                            <div id="dragstartzone" @mousedown="startDrag" @mousemove="doDrag" @mouseup="stopDrag">
+                            </div>
+                            <div id="dragCircle" :style="dragCircleStyle"></div>
+                        </div>
+                    </div>
+                </div>
 
-    <div class="log" id="logOutput">Logs will appear here...</div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="text-center">Joystick values</h2>
+                            <hr>
+                            <p>Vertical: {{ joystick.vertical.toFixed(3) }}</p>
+                            <p>Horizontal: {{ joystick.horizontal.toFixed(3) }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 
+    <footer class="footer mt-auto bg-dark text-light">
+        <div class="container text-center">
+            <h5>page ends here!</h5>
+        </div>
+    </footer>
+
+    <!-- load main.js with cache-busting -->
     <script>
-        const statusEl = document.getElementById('status');
-        const logEl = document.getElementById('logOutput');
-
-        // 🔗 ROSBridge bağlantısı
-        const ros = new ROSLIB.Ros({
-            url: 'wss://i-0e4f27acc2ad63694.robotigniteacademy.com/9d42a666-7e7d-4cf3-b5f6-79572fd74e53/rosbridge/'
-        });
-
-        ros.on('connection', () => {
-            statusEl.innerText = '✅ Connected to ROS!';
-            statusEl.className = 'status connected';
-            console.log('Connected to rosbridge websocket server.');
-            log('Connected to ROSBridge ✅');
-        });
-
-        ros.on('error', (error) => {
-            statusEl.innerText = '❌ Connection Error';
-            statusEl.className = 'status error';
-            console.error('Connection error:', error);
-            log('⚠️ Connection Error! Check WebSocket URL.');
-        });
-
-        ros.on('close', () => {
-            statusEl.innerText = '🔌 Connection Closed';
-            statusEl.className = 'status closed';
-            console.warn('Connection to rosbridge closed.');
-            log('Connection closed 🔌');
-        });
-
-        // 🦾 /fastbot/cmd_vel publisher
-        const cmdVel = new ROSLIB.Topic({
-            ros: ros,
-            name: '/fastbot/cmd_vel',
-            messageType: 'geometry_msgs/Twist'
-        });
-
-        // 🧭 Komut gönderme fonksiyonu
-        function sendCommand(linearX, angularZ) {
-            const twist = {
-                linear: { x: linearX, y: 0.0, z: 0.0 },
-                angular: { x: 0.0, y: 0.0, z: angularZ }
-            };
-
-            cmdVel.publish(twist);
-            const msg = `📤 Sent /fastbot/cmd_vel:\n  linear.x = ${linearX}\n  angular.z = ${angularZ}`;
-            log(msg);
-            console.log(msg);
-        }
-
-        // 🪶 Log yazdırma fonksiyonu
-        function log(message) {
-            const time = new Date().toLocaleTimeString();
-            logEl.innerText += `[${time}] ${message}\n`;
-            logEl.scrollTop = logEl.scrollHeight;
-        }
-
-        // 🔘 Buton eventleri
-        document.getElementById('forward').onclick = () => sendCommand(0.2, 0.0);
-        document.getElementById('stop').onclick = () => sendCommand(0.0, 0.0);
-        document.getElementById('turnLeft').onclick = () => sendCommand(0.0, 0.5);
-        document.getElementById('turnRight').onclick = () => sendCommand(0.0, -0.5);
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = 'main.js?v=' + Date.now();
+        document.head.appendChild(script);
     </script>
 </body>
 
